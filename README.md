@@ -73,3 +73,7 @@ Sensitive-data leakage prevention belongs to kagent or platform policy and remai
 - `helm template helm/a2a-teams-template`
 
 Use `REQUIREMENTS_TRACEABILITY.md` to choose the validation commands relevant to a specific requirement area.
+
+## Configuration
+
+Configuration is provided via environment variables. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for a full list and examples, and use `/.env.example` as a starting point for local development.
