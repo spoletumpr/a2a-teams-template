@@ -12,7 +12,7 @@ const CONTROL_CHARACTERS_EXCEPT_WHITESPACE = /[\u0000-\u0008\u000B\u000C\u000E-\
 
 // Teams renders <at> tags as mentions. Strip by default so agent output cannot
 // notify users/channels unless the operator explicitly accepts that risk.
-const OUTBOUND_MENTION_TAG = /<at>.*?<\/at>/giu;
+const OUTBOUND_MENTION_TAG = /<at>[^<>]*<\/at>/giu;
 
 export type SanitiseResult =
   | { readonly ok: true; readonly text: string }
@@ -45,11 +45,23 @@ export function sanitiseInboundText(text: string): SanitiseResult {
 /** Render agent output as bounded plain text and strip Teams mentions by default. */
 export function sanitiseOutboundText(text: string, allowMentions: boolean): string {
   const cleaned = text.replace(ZERO_WIDTH_GLOBAL, '');
-  const withoutMentions = allowMentions ? cleaned : cleaned.replace(OUTBOUND_MENTION_TAG, '').trim();
+  const withoutMentions = allowMentions ? cleaned : stripOutboundMentions(cleaned).trim();
 
   // Cap output by UTF-8 bytes to stay below practical Teams payload limits while
   // preserving valid Unicode text.
   return capUtf8Bytes(withoutMentions, OUTBOUND_MAX_BYTES);
+}
+
+function stripOutboundMentions(text: string): string {
+  let previous: string;
+  let current = text;
+
+  do {
+    previous = current;
+    current = current.replace(OUTBOUND_MENTION_TAG, '');
+  } while (current !== previous);
+
+  return current;
 }
 
 function capUtf8Bytes(text: string, maxBytes: number): string {

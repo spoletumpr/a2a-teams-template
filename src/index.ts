@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import { App, ExpressAdapter } from '@microsoft/teams.apps';
 import { ConsoleLogger } from '@microsoft/teams.common';
 import express from 'express';
@@ -8,7 +10,15 @@ import { AppConfig, loadConfig } from './config.js';
 
 type AppLogger = ConsoleLogger;
 
-async function main(): Promise<void> {
+/**
+ * Compose the Teams Connector Template runtime and start serving traffic.
+ *
+ * Startup is intentionally eager: configuration is validated, A2A discovery is
+ * completed, and only then does the Teams SDK begin accepting activities. That
+ * keeps the request-response connector from receiving Teams turns before the
+ * single configured kagent Agent endpoint is known to be usable.
+ */
+export async function main(): Promise<void> {
   const config = loadConfig();
   const logger = new ConsoleLogger('a2a-teams-template', { level: config.logLevel });
 
@@ -27,7 +37,7 @@ async function main(): Promise<void> {
 }
 
 /** Log only configuration-level risks; never log message content or raw conversation IDs. */
-function logRiskAcceptance(config: AppConfig, logger: AppLogger): void {
+export function logRiskAcceptance(config: AppConfig, logger: AppLogger): void {
   if (config.microsoftAppType === 'MultiTenant') {
     logger.warn('MICROSOFT_APP_TYPE=MultiTenant requires a strict TEAMS_TENANT_ALLOWLIST in production.');
   }
@@ -41,7 +51,11 @@ function logRiskAcceptance(config: AppConfig, logger: AppLogger): void {
   }
 }
 
-function registerHealthRoute(expressApp: express.Express, a2aClient: KagentA2aClient): void {
+/**
+ * Expose readiness based on A2A initialization, not just process liveness.
+ * Kubernetes can keep the pod out of service until discovery has succeeded.
+ */
+export function registerHealthRoute(expressApp: express.Express, a2aClient: KagentA2aClient): void {
   expressApp.get('/healthz', (_req, res) => {
     if (!a2aClient.ready) {
       res.status(503).json({ status: 'starting' });
@@ -51,7 +65,8 @@ function registerHealthRoute(expressApp: express.Express, a2aClient: KagentA2aCl
   });
 }
 
-function createTeamsApp(config: AppConfig, logger: AppLogger, expressApp: express.Express): App {
+/** Create the Teams SDK app while preserving Bot Framework as the auth boundary. */
+export function createTeamsApp(config: AppConfig, logger: AppLogger, expressApp: express.Express): App {
   // Keep the Teams SDK as the Bot Framework authentication authority. The
   // connector should not implement its own token validation or anonymous mode.
   const appOptions = {
@@ -71,7 +86,14 @@ function createTeamsApp(config: AppConfig, logger: AppLogger, expressApp: expres
   return new App(appOptions);
 }
 
-function registerMessageHandler(app: App, bridge: TeamsKagentBridge, logger: AppLogger): void {
+/**
+ * Register the request-response turn handler.
+ *
+ * The bridge owns Teams-to-A2A behavior. This boundary owns the final
+ * user-facing fallback so transient A2A or SDK failures do not leak details into
+ * Teams and do not require the bridge to know about process-level logging.
+ */
+export function registerMessageHandler(app: App, bridge: TeamsKagentBridge, logger: AppLogger): void {
   app.on('message', async ({ activity, send }) => {
     try {
       await bridge.handleMessage({ activity, send });
@@ -82,7 +104,9 @@ function registerMessageHandler(app: App, bridge: TeamsKagentBridge, logger: App
   });
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

@@ -45,6 +45,10 @@ describe('sanitiseOutboundText', () => {
     expect(sanitiseOutboundText('Hi <at>Alice</at>', false)).toBe('Hi');
   });
 
+  it('strips nested mention tags by default', () => {
+    expect(sanitiseOutboundText('Hi <at>Alice <at>Bob</at></at>', false)).toBe('Hi');
+  });
+
   it('allows mention tags when explicitly enabled', () => {
     expect(sanitiseOutboundText('Hi <at>Alice</at>', true)).toBe('Hi <at>Alice</at>');
   });

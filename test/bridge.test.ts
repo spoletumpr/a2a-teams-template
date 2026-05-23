@@ -115,6 +115,21 @@ describe('TeamsKagentBridge', () => {
     expect(sent).toEqual([]);
   });
 
+  it('accepts non-personal messages without a bot mention when mention gating is disabled', async () => {
+    const { bridge, send, sendMessage, sent } = createHarness({ teamsMentionOnly: false });
+
+    await bridge.handleMessage({
+      activity: createActivity({ conversationType: 'channel', tenantId: 'tenant-id', mentioned: false }),
+      send,
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      contextId: hashTeamsSessionId('tenant-id', 'conversation-id'),
+      text: 'hello agent',
+    });
+    expect(sent).toEqual([{ type: 'typing' }, 'agent  response']);
+  });
+
   it('accepts mentioned channel messages', async () => {
     const { bridge, send, sendMessage, sent } = createHarness();
 
