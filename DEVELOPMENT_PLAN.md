@@ -1,5 +1,7 @@
 # Development Plan
 
+Use `REQUIREMENTS_TRACEABILITY.md` as the living index from plan phases and validation commands back to the current requirements baseline, ADRs, implementation seams, tests, and roadmap gaps.
+
 ## Phase 0: Verify upstream contracts
 
 - Inspect existing kagent connector templates, especially Slack and Discord.

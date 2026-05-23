@@ -4,6 +4,8 @@
 
 `a2a-teams-template` is a standalone kagent ecosystem template that lets Microsoft Teams users interact with one configured kagent agent through A2A. It is intended for upstream contribution to the kagent product ecosystem.
 
+The managed requirements traceability index lives in `REQUIREMENTS_TRACEABILITY.md`. Use it to map each major requirement area to governing ADRs, glossary terms, implementation seams, tests, validation commands, and roadmap status.
+
 ## Goals
 
 - Provide an idiomatic Microsoft Teams connector for kagent.

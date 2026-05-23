@@ -1,5 +1,7 @@
 # Security Model
 
+Security-related requirements are indexed in `REQUIREMENTS_TRACEABILITY.md` alongside governing ADRs, implementation seams, tests, validation commands, and roadmap gaps.
+
 ## Trust boundaries
 
 ```text

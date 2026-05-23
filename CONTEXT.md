@@ -2,6 +2,8 @@
 
 This context defines the product language for a Microsoft Teams connector template intended for contribution to the kagent ecosystem.
 
+For requirements traceability, use `REQUIREMENTS_TRACEABILITY.md` to navigate from these glossary terms to governing ADRs, implementation seams, tests, validation commands, and roadmap status.
+
 ## Language
 
 **Teams Connector Template**:
