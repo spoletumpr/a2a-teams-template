@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "a2a-teams-template.fullname" . }}
+  labels:
+    {{- include "a2a-teams-template.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "a2a-teams-template.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "a2a-teams-template.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "a2a-teams-template.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "a2a-teams-template.name" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          env:
+            - name: PORT
+              value: {{ .Values.containerPort | quote }}
+            - name: KAGENT_A2A_URL
+              value: {{ .Values.config.kagentA2aUrl | quote }}
+            - name: MICROSOFT_APP_ID
+              value: {{ .Values.config.microsoftAppId | quote }}
+            - name: MICROSOFT_APP_TENANT_ID
+              value: {{ .Values.config.microsoftAppTenantId | quote }}
+            - name: MICROSOFT_APP_TYPE
+              value: {{ .Values.config.microsoftAppType | quote }}
+            - name: TEAMS_TENANT_ALLOWLIST
+              value: {{ .Values.config.teamsTenantAllowlist | quote }}
+            - name: TEAMS_MENTION_ONLY
+              value: {{ .Values.config.teamsMentionOnly | quote }}
+            - name: TEAMS_ALLOW_OUTBOUND_MENTIONS
+              value: {{ .Values.config.teamsAllowOutboundMentions | quote }}
+            - name: KAGENT_FORWARD_USER_ID
+              value: {{ .Values.config.kagentForwardUserId | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel | quote }}
+            {{- if .Values.existingSecret.name }}
+            - name: MICROSOFT_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret.name | quote }}
+                  key: {{ .Values.existingSecret.microsoftAppPasswordKey | quote }}
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
