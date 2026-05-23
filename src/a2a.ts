@@ -1,4 +1,4 @@
-import type { AgentCard, Message, MessageSendParams, Part, Task } from '@a2a-js/sdk';
+import type { AgentCard, Message, MessageSendParams, Task } from '@a2a-js/sdk';
 import { Client, ClientFactory, JsonRpcTransportFactory } from '@a2a-js/sdk/client';
 
 /**
@@ -15,8 +15,9 @@ export type SendKagentMessageOptions = {
  * Thin wrapper around the A2A SDK for one configured kagent Agent endpoint.
  *
  * This module owns only A2A concerns: endpoint discovery, request construction,
- * response extraction, and readiness. Teams authorization, mention policy, and
- * message sanitisation intentionally live in separate modules.
+ * raw response forwarding, and readiness. Teams authorization, mention policy,
+ * response rendering, and message sanitisation intentionally live in separate
+ * modules.
  */
 export class KagentA2aClient {
   private readonly baseUrl: string;
@@ -59,7 +60,7 @@ export class KagentA2aClient {
     return this.initPromise;
   }
 
-  async sendMessage(options: SendKagentMessageOptions): Promise<string> {
+  async sendMessage(options: SendKagentMessageOptions): Promise<Message | Task> {
     // Defensive lazy initialization. main() initializes eagerly so bad endpoint
     // configuration normally fails before serving traffic.
     await this.initialize();
@@ -98,14 +99,7 @@ export class KagentA2aClient {
       },
     };
 
-    const result = await client.sendMessage(params);
-    const text = extractText(result);
-    if (!text) {
-      // Avoid sending an empty Teams message if the agent returns only non-text
-      // parts or an empty task status.
-      return 'The agent did not return a text response.';
-    }
-    return text;
+    return client.sendMessage(params);
   }
 
   private async resolve(): Promise<AgentCard> {
@@ -117,32 +111,6 @@ export class KagentA2aClient {
     this.agentCard = card;
     return card;
   }
-}
-
-/** Convert A2A message/task responses into the connector's plain-text contract. */
-export function extractText(result: Message | Task): string {
-  if (result.kind === 'message') {
-    return partsToText(result.parts);
-  }
-
-  const statusText = result.status.message ? partsToText(result.status.message.parts) : '';
-  const artifactText = result.artifacts?.flatMap((artifact) => artifact.parts).map(partToText).filter(Boolean).join('\n') ?? '';
-  return [statusText, artifactText].filter(Boolean).join('\n').trim();
-}
-
-function partsToText(parts: readonly Part[]): string {
-  // Preserve readable separation between text parts without interpreting the
-  // content as Markdown, JSON, or Adaptive Cards.
-  return parts.map(partToText).filter(Boolean).join('\n').trim();
-}
-
-function partToText(part: Part): string {
-  // The v1 connector is text-first. Non-text A2A parts are ignored unless a
-  // future explicit contract defines safe Teams rendering, such as cards.
-  if (part.kind === 'text') {
-    return part.text;
-  }
-  return '';
 }
 
 function randomId(): string {

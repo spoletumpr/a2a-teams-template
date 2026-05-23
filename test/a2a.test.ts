@@ -1,4 +1,3 @@
-import type { Message, Task } from '@a2a-js/sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const clientModule = vi.hoisted(() => ({
@@ -14,87 +13,9 @@ vi.mock('@a2a-js/sdk/client', () => ({
   JsonRpcTransportFactory: vi.fn().mockImplementation(() => ({})),
 }));
 
-const { KagentA2aClient, extractText } = await import('../src/a2a.js');
+const { KagentA2aClient } = await import('../src/a2a.js');
 
 const agentCard = { name: 'kagent' };
-
-describe('extractText', () => {
-  it('extracts text from message parts', () => {
-    const message = {
-      kind: 'message',
-      parts: [
-        { kind: 'text', text: 'hello' },
-        { kind: 'text', text: 'there' },
-      ],
-    } as Message;
-
-    expect(extractText(message)).toBe('hello\nthere');
-  });
-
-  it('trims message text and ignores non-text parts', () => {
-    const message = {
-      kind: 'message',
-      parts: [
-        { kind: 'text', text: ' hello ' },
-        { kind: 'data', data: { ignored: true } },
-      ],
-    } as unknown as Message;
-
-    expect(extractText(message)).toBe('hello');
-  });
-
-  it('extracts text from task status messages', () => {
-    const task = {
-      kind: 'task',
-      status: {
-        message: {
-          kind: 'message',
-          parts: [{ kind: 'text', text: 'status text' }],
-        },
-      },
-    } as Task;
-
-    expect(extractText(task)).toBe('status text');
-  });
-
-  it('extracts text from task artifacts', () => {
-    const task = {
-      kind: 'task',
-      status: {},
-      artifacts: [
-        { parts: [{ kind: 'text', text: 'artifact one' }] },
-        { parts: [{ kind: 'text', text: 'artifact two' }] },
-      ],
-    } as Task;
-
-    expect(extractText(task)).toBe('artifact one\nartifact two');
-  });
-
-  it('joins task status and artifact text', () => {
-    const task = {
-      kind: 'task',
-      status: {
-        message: {
-          kind: 'message',
-          parts: [{ kind: 'text', text: 'status' }],
-        },
-      },
-      artifacts: [{ parts: [{ kind: 'text', text: 'artifact' }] }],
-    } as Task;
-
-    expect(extractText(task)).toBe('status\nartifact');
-  });
-
-  it('returns empty text for tasks without text parts', () => {
-    const task = {
-      kind: 'task',
-      status: {},
-      artifacts: [{ parts: [{ kind: 'file', file: { name: 'report.pdf' } }] }],
-    } as unknown as Task;
-
-    expect(extractText(task)).toBe('');
-  });
-});
 
 describe('KagentA2aClient', () => {
   beforeEach(() => {
@@ -141,7 +62,10 @@ describe('KagentA2aClient', () => {
         contextId: 'teams:hashed-context',
         text: 'hello agent',
       }),
-    ).resolves.toBe('agent response');
+    ).resolves.toEqual({
+      kind: 'message',
+      parts: [{ kind: 'text', text: 'agent response' }],
+    });
 
     expect(clientModule.sendMessage).toHaveBeenCalledWith({
       configuration: {
@@ -178,7 +102,7 @@ describe('KagentA2aClient', () => {
     );
   });
 
-  it('returns a safe fallback when the agent has no text response', async () => {
+  it('returns raw non-text A2A responses for the rendering boundary', async () => {
     clientModule.sendMessage.mockResolvedValue({
       kind: 'message',
       parts: [{ kind: 'data', data: { ignored: true } }],
@@ -190,6 +114,9 @@ describe('KagentA2aClient', () => {
         contextId: 'teams:hashed-context',
         text: 'hello agent',
       }),
-    ).resolves.toBe('The agent did not return a text response.');
+    ).resolves.toEqual({
+      kind: 'message',
+      parts: [{ kind: 'data', data: { ignored: true } }],
+    });
   });
 });

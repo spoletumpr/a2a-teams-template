@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "containerPort": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kagentA2aUrl",
+        "microsoftAppId",
+        "microsoftAppTenantId",
+        "microsoftAppType",
+        "teamsTenantAllowlist",
+        "teamsMentionOnly",
+        "teamsAllowOutboundMentions",
+        "kagentForwardUserId",
+        "logLevel"
+      ],
+      "properties": {
+        "kagentA2aUrl": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^https?://"
+        },
+        "microsoftAppId": {
+          "type": "string"
+        },
+        "microsoftAppTenantId": {
+          "type": "string"
+        },
+        "microsoftAppType": {
+          "type": "string",
+          "enum": ["SingleTenant", "MultiTenant", "UserAssignedMSI"]
+        },
+        "teamsTenantAllowlist": {
+          "type": "string"
+        },
+        "teamsMentionOnly": {
+          "type": "string",
+          "enum": ["true", "false"]
+        },
+        "teamsAllowOutboundMentions": {
+          "type": "string",
+          "enum": ["true", "false"]
+        },
+        "kagentForwardUserId": {
+          "type": "string",
+          "enum": ["true", "false"]
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug", "trace"]
+        }
+      }
+    },
+    "existingSecret": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "microsoftAppPasswordKey"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "microsoftAppPasswordKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["host", "paths"],
+            "properties": {
+              "host": {
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["path", "pathType"],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pathType": {
+                      "type": "string",
+                      "enum": ["Exact", "Prefix", "ImplementationSpecific"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "egressCidrs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

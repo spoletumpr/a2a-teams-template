@@ -48,7 +48,10 @@ function createActivity(options: ActivityOptions = {}): IMessageActivity {
 
 function createHarness(config: Partial<AppConfig> = {}) {
   const sent: Array<string | { type: 'typing' }> = [];
-  const sendMessage = vi.fn(async (_options: SendKagentMessageOptions) => 'agent <at>Alice</at> response');
+  const sendMessage = vi.fn(async (_options: SendKagentMessageOptions) => ({
+    kind: 'message',
+    parts: [{ kind: 'text', text: 'agent <at>Alice</at> response' }],
+  }));
   const warn = vi.fn();
   const bridge = new TeamsKagentBridge(
     { ...BASE_CONFIG, ...config },
