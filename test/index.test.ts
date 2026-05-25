@@ -59,18 +59,17 @@ describe('index runtime wiring', () => {
 
   it('creates a single-tenant Teams app that leaves mention stripping to the bridge', () => {
     const logger = { warn: vi.fn() };
-    const expressApp = { name: 'express-app' };
+    const httpAdapter = { name: 'http-adapter' };
 
     createTeamsApp(
       { ...BASE_CONFIG, microsoftAppPassword: 'secret' },
       logger as unknown as Parameters<typeof createTeamsApp>[1],
-      expressApp as unknown as Parameters<typeof createTeamsApp>[2],
+      httpAdapter as unknown as Parameters<typeof createTeamsApp>[2],
     );
 
-    expect(teamsModule.ExpressAdapter).toHaveBeenCalledWith(expressApp);
     expect(teamsModule.App).toHaveBeenCalledWith({
       logger,
-      httpServerAdapter: { server: expressApp },
+      httpServerAdapter: httpAdapter,
       clientId: 'app-id',
       activity: {
         mentions: {

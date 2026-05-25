@@ -2,13 +2,13 @@ import { fileURLToPath } from 'node:url';
 
 import { App, ExpressAdapter } from '@microsoft/teams.apps';
 import { ConsoleLogger } from '@microsoft/teams.common';
-import express from 'express';
 
 import { KagentA2aClient } from './a2a.js';
 import { TeamsKagentBridge } from './bridge.js';
 import { AppConfig, loadConfig } from './config.js';
 
 type AppLogger = ConsoleLogger;
+type HealthRouter = Pick<ExpressAdapter, 'get'>;
 
 /**
  * Compose the Teams Connector Template runtime and start serving traffic.
@@ -24,12 +24,12 @@ export async function main(): Promise<void> {
 
   logRiskAcceptance(config, logger);
 
-  const expressApp = express();
+  const httpAdapter = new ExpressAdapter(undefined, { logger: logger.child('http') });
   const a2aClient = new KagentA2aClient(config.kagentA2aUrl);
   const bridge = new TeamsKagentBridge(config, a2aClient, logger.child('bridge'));
-  const app = createTeamsApp(config, logger, expressApp);
+  const app = createTeamsApp(config, logger, httpAdapter);
 
-  registerHealthRoute(expressApp, a2aClient);
+  registerHealthRoute(httpAdapter, a2aClient);
   registerMessageHandler(app, bridge, logger);
 
   await a2aClient.initialize();
@@ -55,8 +55,8 @@ export function logRiskAcceptance(config: AppConfig, logger: AppLogger): void {
  * Expose readiness based on A2A initialization, not just process liveness.
  * Kubernetes can keep the pod out of service until discovery has succeeded.
  */
-export function registerHealthRoute(expressApp: express.Express, a2aClient: KagentA2aClient): void {
-  expressApp.get('/healthz', (_req, res) => {
+export function registerHealthRoute(router: HealthRouter, a2aClient: KagentA2aClient): void {
+  router.get('/healthz', (_req, res) => {
     if (!a2aClient.ready) {
       res.status(503).json({ status: 'starting' });
       return;
@@ -66,12 +66,12 @@ export function registerHealthRoute(expressApp: express.Express, a2aClient: Kage
 }
 
 /** Create the Teams SDK app while preserving Bot Framework as the auth boundary. */
-export function createTeamsApp(config: AppConfig, logger: AppLogger, expressApp: express.Express): App {
+export function createTeamsApp(config: AppConfig, logger: AppLogger, httpAdapter: ExpressAdapter): App {
   // Keep the Teams SDK as the Bot Framework authentication authority. The
   // connector should not implement its own token validation or anonymous mode.
   const appOptions = {
     logger,
-    httpServerAdapter: new ExpressAdapter(expressApp),
+    httpServerAdapter: httpAdapter,
     clientId: config.microsoftAppId,
     activity: {
       mentions: {
