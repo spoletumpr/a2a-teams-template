@@ -4,7 +4,7 @@ This document lists the environment variables the connector reads at startup, th
 
 - **KAGENT_A2A_URL**: URL of the kagent Agent A2A endpoint. Example: `https://kagent.example.com`. Required. Must use `https://` for external hosts.
 - **MICROSOFT_APP_ID**: Azure App Registration (client) ID. Required.
-- **MICROSOFT_APP_PASSWORD**: Azure App Registration client secret. Optional — recommended to store in a secret manager and _not_ in source control.
+- **MICROSOFT_APP_PASSWORD**: Azure App Registration client secret. Optional development or compatibility fallback; production deployments should prefer Workload Identity / federated credentials where supported.
 - **MICROSOFT_APP_TENANT_ID**: Azure AD tenant (directory) ID. Required for SingleTenant/MultiTenant deployments.
 - **MICROSOFT_APP_TYPE**: One of `SingleTenant`, `MultiTenant`, or `UserAssignedMSI`. Defaults to `SingleTenant`.
 - **TEAMS_TENANT_ALLOWLIST**: Comma-separated list of allowed Teams tenant IDs. Optional — when empty only `MICROSOFT_APP_TENANT_ID` is accepted.
@@ -17,7 +17,8 @@ This document lists the environment variables the connector reads at startup, th
 ## Security
 
 - Never commit real secrets to the repository. Use your platform's secret manager (Kubernetes Secrets, GitHub Actions secrets, Azure Key Vault, etc.).
-- `MICROSOFT_APP_PASSWORD` is optional in development for convenience, but production deployments should provide it via secure configuration.
+- Production deployments should prefer Workload Identity / federated credentials.
+- If a client secret fallback is required, provide `MICROSOFT_APP_PASSWORD` through secure configuration such as an Existing Secret Reference, not source control.
 
 ## Local development
 

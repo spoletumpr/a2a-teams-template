@@ -53,7 +53,7 @@ The managed requirements traceability index lives in `REQUIREMENTS_TRACEABILITY.
 - Session ID format: `teams:<64 lowercase hex SHA-256 digest>`.
 - Digest input: `tenant_id + "\n" + conversation_id`.
 - The connector MUST NOT pass raw Teams conversation IDs to kagent.
-- The connector MUST hash user AAD object IDs in audit logs.
+- If audit logs include Teams user identifiers, they MUST use hashed identifiers only.
 - User identity forwarding to kagent MUST be disabled by default.
 - If enabled with `KAGENT_FORWARD_USER_ID=true`, the connector MUST forward only a hashed stable Teams user identifier.
 
@@ -85,7 +85,7 @@ The managed requirements traceability index lives in `REQUIREMENTS_TRACEABILITY.
 | `MICROSOFT_APP_TENANT_ID` | yes | none | Tenant ID for single-tenant default. |
 | `MICROSOFT_APP_TYPE` | no | `SingleTenant` | Allow `MultiTenant` with warnings. |
 | `TEAMS_TENANT_ALLOWLIST` | no | none | Comma-separated allowed tenant IDs. |
-| `TEAMS_MENTION_ONLY` | no | context-dependent | Explicit mention behavior override. |
+| `TEAMS_MENTION_ONLY` | no | `true` | Explicit mention behavior override for channel/group chats. |
 | `TEAMS_ALLOW_OUTBOUND_MENTIONS` | no | `false` | Risk-acceptance flag for outbound mention rendering. |
 | `KAGENT_FORWARD_USER_ID` | no | `false` | Forward hashed Teams user ID to kagent. |
 | `LOG_LEVEL` | no | `info` | `debug` may include sensitive diagnostic content and must warn at startup. |
@@ -103,8 +103,8 @@ The managed requirements traceability index lives in `REQUIREMENTS_TRACEABILITY.
 
 - `npm ci && npm run build` succeeds.
 - Sanitiser tests pass.
-- `helm lint helm/` passes.
-- `helm template helm/` renders a Deployment with restricted pod/container security context.
+- `helm lint helm/a2a-teams-template` passes.
+- `helm template helm/a2a-teams-template` renders a Deployment with restricted pod/container security context.
 - Chart uses existing secret references only and does not render a Kubernetes `Secret`.
-- Teams manifest has no Microsoft Graph permission requests.
+- If a Teams app manifest is added to the repository, it has no Microsoft Graph permission requests.
 - Code contains no local LLM dependency and no raw `botbuilder` dependency unless required transitively by the Teams SDK.

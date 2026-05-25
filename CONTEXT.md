@@ -86,6 +86,22 @@ _Avoid_: mandatory NetworkPolicy, always-on egress restriction
 A Helm configuration pattern where the operator creates Kubernetes Secrets outside the chart and the Teams Connector Template references them by name and key. The chart does not render Secret resources or accept inline secret values.
 _Avoid_: inline Helm secret, chart-managed Secret
 
+**Configuration Contract**:
+The single source of truth for operator-facing configuration names, defaults, allowed values, examples, and risk text. Runtime parsing, example environment files, Helm values, Helm schema, and configuration docs should either derive from it or be checked against it.
+_Avoid_: duplicated config tables, drift-prone examples, chart-only defaults
+
+**Runtime Composition**:
+The startup module that wires validated configuration to concrete adapters for Teams SDK ingress, A2A readiness, health checks, and request-response turn handling. `main()` should stay thin; tests should exercise Runtime Composition through fake adapters rather than many exported startup helpers.
+_Avoid_: exported startup helper collection, test-only seams, process-level orchestration logic
+
+**Teams Intake**:
+The module that accepts or rejects an inbound Teams turn before it becomes a kagent A2A request. It owns tenant checks, Mention-gated Conversation behavior, inbound Boundary Sanitisation, Hashed Teams Session construction, and Optional User Forwarding.
+_Avoid_: bridge-owned Teams policy, scattered turn acceptance checks, acceptance branches in orchestration tests
+
+**A2A Message Construction**:
+The module that maps an accepted Teams turn into the exact A2A message shape sent to the kagent Agent, including blocking text/plain configuration and allowed pseudonymous metadata. It keeps Teams identity facts and A2A SDK details from drifting across seams.
+_Avoid_: metadata mapping split across Teams intake and A2A adapter, raw Teams metadata, SDK-shaped connector policy
+
 ## Example dialogue
 
 Developer: “Should the Teams connector include company-specific compliance controls?”

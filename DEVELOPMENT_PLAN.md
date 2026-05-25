@@ -37,7 +37,7 @@ Use `REQUIREMENTS_TRACEABILITY.md` as the living index from plan phases and vali
 - Add Helm chart with Deployment, Service, ServiceAccount, optional Ingress, optional NetworkPolicy, PDB, and probes.
 - Use existing secret references only.
 - Add restricted pod/container security context.
-- Add Teams app manifest with `personal`, `team`, and `groupchat` scopes.
+- If a Teams app manifest is added to this repository, include `personal`, `team`, and `groupchat` scopes.
 - Do not request Microsoft Graph permissions.
 
 ## Phase 5: Documentation
@@ -54,10 +54,10 @@ Use `REQUIREMENTS_TRACEABILITY.md` as the living index from plan phases and vali
 - `npm test`
 - `npm audit --omit=dev --audit-level=high`
 - `docker build .`
-- `helm lint helm/`
-- `helm template helm/ ...`
-- Validate Teams app manifest schema.
-- Confirm no Graph permissions.
+- `helm lint helm/a2a-teams-template`
+- `helm template helm/a2a-teams-template`
+- If a Teams app manifest is added, validate its schema.
+- If a Teams app manifest is added, confirm no Graph permissions.
 - Confirm no chart-rendered Secret.
 - Confirm no local LLM dependencies.
 

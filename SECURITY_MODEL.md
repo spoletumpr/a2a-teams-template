@@ -58,17 +58,20 @@ The most important known gap is that v1 does not prevent a kagent agent from uni
 
 ## Kubernetes hardening
 
-The Helm chart should provide:
+The Helm chart currently provides:
 
 - restricted pod/container security context,
 - dedicated ServiceAccount,
-- `automountServiceAccountToken: false`,
-- resource requests and limits,
 - readiness/liveness probes on `/healthz`,
-- optional NetworkPolicy disabled by default for upstream compatibility,
-- PodDisruptionBudget.
+- optional NetworkPolicy disabled by default for upstream compatibility.
 
 NetworkPolicy is recommended for production, but disabled by default because external Bot Framework FQDN egress support varies by CNI.
+
+Follow-up Kubernetes hardening candidates:
+
+- `automountServiceAccountToken: false`,
+- default resource requests and limits,
+- PodDisruptionBudget.
 
 ## Secrets
 
